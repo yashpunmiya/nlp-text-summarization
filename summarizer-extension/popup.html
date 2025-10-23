@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Summarizer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📝 Text Summarizer</h1>
+      <p class="subtitle">Advanced NLP Models</p>
+    </div>
+
+    <!-- Server Status -->
+    <div class="status-bar" id="statusBar">
+      <div class="status-indicator" id="statusIndicator"></div>
+      <span id="statusText">Checking server...</span>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings">
+      <div class="setting-row">
+        <label for="methodSelect">Method:</label>
+        <select id="methodSelect">
+          <option value="hybrid" selected>Hybrid (Best)</option>
+          <option value="textrank">TextRank</option>
+          <option value="tfidf">TF-IDF</option>
+          <option value="lsa">LSA</option>
+          <option value="advanced">Advanced spaCy</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label for="sentenceCount">Sentences:</label>
+        <input type="number" id="sentenceCount" min="1" max="10" value="3">
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+      <h3>How to use:</h3>
+      <ol>
+        <li>Select text on any webpage</li>
+        <li>Right-click and choose "Summarize"</li>
+        <li>View your summary instantly!</li>
+      </ol>
+    </div>
+
+    <!-- Info -->
+    <div class="info">
+      <p><strong>Available Methods:</strong></p>
+      <ul>
+        <li><strong>Hybrid:</strong> Best quality (combines all methods)</li>
+        <li><strong>TextRank:</strong> Graph-based PageRank</li>
+        <li><strong>TF-IDF:</strong> Fast statistical approach</li>
+        <li><strong>LSA:</strong> Topic modeling with SVD</li>
+        <li><strong>Advanced:</strong> NER + dependency parsing</li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>💡 Make sure API server is running</p>
+      <button id="helpBtn" class="help-btn">Need Help?</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
