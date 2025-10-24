@@ -1,7 +1,23 @@
 // Background service worker for the extension
 // Handles context menu creation and message passing
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://127.0.0.1:5000';
+
+// Helper: promise wrapper for chrome.storage.sync.get
+function getSyncStorage(keys) {
+  return new Promise((resolve, reject) => {
+    try {
+      chrome.storage.sync.get(keys, (items) => {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          return reject(new Error(chrome.runtime.lastError.message));
+        }
+        resolve(items);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 // Create context menu when extension is installed
 chrome.runtime.onInstalled.addListener(() => {
@@ -71,8 +87,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // Function to call the API
 async function summarizeText(text, method, tabId) {
   try {
-    // Get settings (sentence count)
-    const settings = await chrome.storage.sync.get(['numSentences']);
+  // Get settings (sentence count)
+  const settings = await getSyncStorage(['numSentences']);
     const numSentences = settings.numSentences || 3;
 
     console.log(`📤 Sending request: method=${method}, sentences=${numSentences}`);
@@ -125,15 +141,40 @@ async function summarizeText(text, method, tabId) {
 // Listen for messages from popup or content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'checkServer') {
-    // Check if server is running
-    fetch(`${API_URL}/health`)
-      .then(response => response.json())
-      .then(data => {
-        sendResponse({ status: 'online', data: data });
-      })
-      .catch(error => {
-        sendResponse({ status: 'offline', error: error.message });
-      });
+    // Debug: indicate we received the checkServer message
+    console.log('🔎 checkServer requested from popup', { sender });
+
+    // Helper: fetch with timeout
+    const fetchWithTimeout = (url, timeout = 5000) => {
+      return Promise.race([
+        fetch(url, { cache: 'no-store' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout))
+      ]);
+    };
+
+    // Try primary URL first, then fallback to 127.0.0.1 if hostname fails
+    (async () => {
+      try {
+        console.log('🔗 Pinging', API_URL + '/health');
+        const resp = await fetchWithTimeout(`${API_URL}/health`, 5000);
+        const data = await resp.json();
+        console.log('✅ Health check success', data);
+        sendResponse({ status: 'online', data });
+      } catch (err1) {
+        console.warn('⚠️ Primary health check failed:', err1 && err1.message);
+        try {
+          console.log('🔁 Trying 127.0.0.1 fallback');
+          const resp2 = await fetchWithTimeout(`http://127.0.0.1:5000/health`, 5000);
+          const data2 = await resp2.json();
+          console.log('✅ Fallback health check success', data2);
+          sendResponse({ status: 'online', data: data2 });
+        } catch (err2) {
+          console.error('❌ All health checks failed', err2 && err2.message);
+          sendResponse({ status: 'offline', error: (err2 && err2.message) || (err1 && err1.message) });
+        }
+      }
+    })();
+
     return true; // Keep channel open for async response
   }
 

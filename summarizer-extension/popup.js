@@ -16,16 +16,25 @@ async function checkServerStatus() {
   const statusText = document.getElementById('statusText');
 
   try {
-    const response = await fetch(`${API_URL}/health`);
-    const data = await response.json();
+    // Use background service worker to perform the request (more reliable)
+    chrome.runtime.sendMessage({ action: 'checkServer' }, (resp) => {
+      if (!resp) {
+        statusBar.className = 'status-bar offline';
+        statusIndicator.className = 'status-indicator offline';
+        statusText.textContent = '✗ Server is offline';
+        return;
+      }
 
-    if (response.ok && data.status === 'running') {
-      statusBar.className = 'status-bar online';
-      statusIndicator.className = 'status-indicator online';
-      statusText.textContent = '✓ Server is running';
-    } else {
-      throw new Error('Server not responding correctly');
-    }
+      if (resp.status === 'online' && resp.data && resp.data.status === 'running') {
+        statusBar.className = 'status-bar online';
+        statusIndicator.className = 'status-indicator online';
+        statusText.textContent = '✓ Server is running';
+      } else {
+        statusBar.className = 'status-bar offline';
+        statusIndicator.className = 'status-indicator offline';
+        statusText.textContent = '✗ Server is offline';
+      }
+    });
   } catch (error) {
     statusBar.className = 'status-bar offline';
     statusIndicator.className = 'status-indicator offline';
