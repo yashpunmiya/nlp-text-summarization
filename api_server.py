@@ -225,7 +225,7 @@ if __name__ == '__main__':
     print("=" * 80)
     print("📝 TEXT SUMMARIZATION API SERVER")
     print("=" * 80)
-    print("\n✅ Server starting on http://localhost:5000")
+    print("\n✅ Server starting on http://localhost:8000")
     print("✅ CORS enabled for browser extension")
     print("\n📌 Available endpoints:")
     print("   GET  /health           - Check server status")
@@ -236,4 +236,4 @@ if __name__ == '__main__':
     print("=" * 80 + "\n")
     
     # Run Flask server
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='127.0.0.1', port=8000, debug=False)

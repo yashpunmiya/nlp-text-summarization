@@ -1,6 +1,6 @@
 // Popup script for extension settings and status
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:8000';
 
 // Check server status on popup open
 document.addEventListener('DOMContentLoaded', () => {
@@ -101,7 +101,8 @@ TEXT SUMMARIZER - SETUP GUIDE
 Need more help? Check README.md in project folder.
   `;
 
-  alert(helpMessage);
+  // Replaced blocking alert with console message to avoid modal dialogs
+  console.log(helpMessage);
 }
 
 console.log('✅ Popup script loaded');

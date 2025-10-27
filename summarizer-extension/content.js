@@ -3,7 +3,9 @@
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'showLoading') {
+  if (request.action === 'ping') {
+    sendResponse({ status: 'ready' });
+  } else if (request.action === 'showLoading') {
     showLoadingIndicator();
   } else if (request.action === 'showSummary') {
     hideLoadingIndicator();
@@ -179,6 +181,23 @@ function displaySummary(data) {
           gap: 10px;
           justify-content: flex-end;
         ">
+          <button id="read-aloud" style="
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          " onmouseover="this.style.background='#1976D2'"
+             onmouseout="this.style.background='#2196F3'">
+            🔊 Read Aloud
+          </button>
           <button id="copy-summary" style="
             background: #4CAF50;
             color: white;
@@ -234,6 +253,68 @@ function displaySummary(data) {
         btn.style.background = '#4CAF50';
       }, 2000);
     });
+  });
+
+  // Read Aloud functionality
+  let speechSynthesis = window.speechSynthesis;
+  let currentUtterance = null;
+  let isSpeaking = false;
+
+  document.getElementById('read-aloud').addEventListener('click', function() {
+    const summaryText = summary; // Use the summary variable from the function scope
+    const readBtn = document.getElementById('read-aloud');
+
+    if (isSpeaking) {
+      // Stop speaking
+      speechSynthesis.cancel();
+      isSpeaking = false;
+      readBtn.innerHTML = '🔊 Read Aloud';
+      readBtn.style.background = '#2196F3';
+    } else {
+      // Start speaking
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+
+      currentUtterance = new SpeechSynthesisUtterance(summaryText);
+
+      // Configure speech settings
+      currentUtterance.rate = 0.9; // Slightly slower for clarity
+      currentUtterance.pitch = 1;
+      currentUtterance.volume = 1;
+
+      // Set voice (prefer English voices)
+      const voices = speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice =>
+        voice.lang.startsWith('en') && voice.name.includes('Female')
+      ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+
+      if (englishVoice) {
+        currentUtterance.voice = englishVoice;
+      }
+
+      // Handle speech events
+      currentUtterance.onstart = function() {
+        isSpeaking = true;
+        readBtn.innerHTML = '⏸️ Stop Reading';
+        readBtn.style.background = '#FF9800';
+      };
+
+      currentUtterance.onend = function() {
+        isSpeaking = false;
+        readBtn.innerHTML = '🔊 Read Aloud';
+        readBtn.style.background = '#2196F3';
+      };
+
+      currentUtterance.onerror = function() {
+        isSpeaking = false;
+        readBtn.innerHTML = '🔊 Read Aloud';
+        readBtn.style.background = '#2196F3';
+        console.error('Speech synthesis error');
+      };
+
+      speechSynthesis.speak(currentUtterance);
+    }
   });
 
   // Close on Escape key
@@ -331,6 +412,11 @@ function displayError(errorMessage) {
 
 // Remove summary modal
 function removeSummaryModal() {
+  // Stop speech synthesis if active
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
+
   const modal = document.getElementById('nlp-summarizer-modal');
   if (modal) {
     modal.remove();

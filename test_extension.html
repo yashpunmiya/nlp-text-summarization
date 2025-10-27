@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page for NLP Summarizer Extension</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-text {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .instructions {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #007bff;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Page for NLP Text Summarizer Extension</h1>
+
+    <div class="instructions">
+        <h3>How to Test:</h3>
+        <ol>
+            <li>Select any text below (or your own text)</li>
+            <li>Right-click and choose "✨ Summarize (Hybrid)" from the context menu</li>
+            <li>The extension should show a loading indicator, then display the summary</li>
+        </ol>
+    </div>
+
+    <div id="status"></div>
+
+    <h2>Sample Text for Testing:</h2>
+
+    <div class="test-text">
+        <p>Natural Language Processing (NLP) is a subfield of artificial intelligence that focuses on the interaction between computers and humans through natural language. The ultimate goal of NLP is to read, decipher, understand, and make sense of human language in a manner that is valuable. Modern NLP techniques leverage machine learning and deep learning to process and analyze large amounts of natural language data.</p>
+
+        <p>Text summarization is one of the most important applications of NLP. It involves creating a concise version of a longer text while preserving its key information and meaning. There are several approaches to text summarization, including extractive methods that select important sentences from the original text, and abstractive methods that generate new sentences to capture the essence of the content.</p>
+
+        <p>This advanced NLP summarizer uses multiple sophisticated algorithms including TF-IDF (Term Frequency-Inverse Document Frequency), TextRank (a graph-based ranking algorithm), Latent Semantic Analysis (LSA) using Singular Value Decomposition, and advanced spaCy-based methods. The hybrid approach combines multiple techniques to achieve better results than any single method alone.</p>
+    </div>
+
+    <h2>Another Test Text:</h2>
+
+    <div class="test-text">
+        <p>Machine learning is a method of data analysis that automates analytical model building. It is a branch of artificial intelligence based on the idea that systems can learn from data, identify patterns and make decisions with minimal human intervention. The process of learning begins with observations or data, such as examples, direct experience, or instruction, in order to look for patterns in data and make better decisions in the future based on the examples that we provide.</p>
+
+        <p>The primary aim is to allow the computers learn automatically without human intervention or assistance and adjust actions accordingly. Machine learning algorithms are used in a wide variety of applications such as email filtering, detection of network intruders, and computer vision, where it is difficult or infeasible to develop conventional algorithms to perform the needed tasks.</p>
+    </div>
+
+    <script>
+        // Simple test to check if content script is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusDiv = document.getElementById('status');
+
+            // Check if chrome extension APIs are available
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                statusDiv.innerHTML = '<div class="status success">✓ Extension APIs detected - Content script should be loaded</div>';
+            } else {
+                statusDiv.innerHTML = '<div class="status error">✗ Extension APIs not detected - Make sure the extension is loaded</div>';
+            }
+        });
+    </script>
+</body>
+</html>

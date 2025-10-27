@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Read Aloud Feature Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .summary-text {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.stop {
+            background: #dc3545;
+        }
+        button.stop:hover {
+            background: #c82333;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.speaking {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.stopped {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔊 Read Aloud Feature Test</h1>
+    <p>This page tests the speech synthesis functionality that was added to the browser extension.</p>
+
+    <div class="summary-text" id="summary-text">
+        Natural Language Processing (NLP) is a subfield of artificial intelligence that focuses on the interaction between computers and humans through natural language. Text summarization is an important NLP task that involves creating a concise version of a longer text while preserving its key information and meaning. This advanced NLP summarizer uses multiple sophisticated algorithms including TF-IDF, TextRank, Latent Semantic Analysis, and spaCy-based methods to generate high-quality summaries.
+    </div>
+
+    <div class="controls">
+        <button id="read-aloud-btn">🔊 Read Aloud</button>
+        <button id="stop-btn" class="stop" style="display: none;">⏹️ Stop</button>
+    </div>
+
+    <div id="status" class="status stopped">Ready to read aloud</div>
+
+    <script>
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        let isSpeaking = false;
+
+        const readBtn = document.getElementById('read-aloud-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const statusDiv = document.getElementById('status');
+        const summaryText = document.getElementById('summary-text').textContent;
+
+        function updateStatus(message, isSpeakingStatus) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + (isSpeakingStatus ? 'speaking' : 'stopped');
+        }
+
+        readBtn.addEventListener('click', function() {
+            if (isSpeaking) {
+                // Stop speaking
+                speechSynthesis.cancel();
+                isSpeaking = false;
+                readBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                updateStatus('Stopped', false);
+            } else {
+                // Start speaking
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(summaryText);
+
+                // Configure speech settings
+                currentUtterance.rate = 0.9; // Slightly slower for clarity
+                currentUtterance.pitch = 1;
+                currentUtterance.volume = 1;
+
+                // Set voice (prefer English voices)
+                const voices = speechSynthesis.getVoices();
+                const englishVoice = voices.find(voice =>
+                    voice.lang.startsWith('en') && voice.name.includes('Female')
+                ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+
+                if (englishVoice) {
+                    currentUtterance.voice = englishVoice;
+                    console.log('Using voice:', englishVoice.name);
+                }
+
+                // Handle speech events
+                currentUtterance.onstart = function() {
+                    isSpeaking = true;
+                    readBtn.style.display = 'none';
+                    stopBtn.style.display = 'inline-block';
+                    updateStatus('Speaking...', true);
+                };
+
+                currentUtterance.onend = function() {
+                    isSpeaking = false;
+                    readBtn.style.display = 'inline-block';
+                    stopBtn.style.display = 'none';
+                    updateStatus('Finished reading', false);
+                };
+
+                currentUtterance.onerror = function(event) {
+                    isSpeaking = false;
+                    readBtn.style.display = 'inline-block';
+                    stopBtn.style.display = 'none';
+                    updateStatus('Error: ' + event.error, false);
+                    console.error('Speech synthesis error:', event.error);
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+        });
+
+        stopBtn.addEventListener('click', function() {
+            speechSynthesis.cancel();
+            isSpeaking = false;
+            readBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            updateStatus('Stopped', false);
+        });
+
+        // Load voices when available
+        speechSynthesis.onvoiceschanged = function() {
+            console.log('Voices loaded:', speechSynthesis.getVoices().length);
+        };
+
+        updateStatus('Ready to read aloud', false);
+    </script>
+</body>
+</html>

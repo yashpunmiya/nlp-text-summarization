@@ -1,7 +1,7 @@
 // Background service worker for the extension
 // Handles context menu creation and message passing
 
-const API_URL = 'http://127.0.0.1:5000';
+const API_URL = 'http://127.0.0.1:8000';
 
 // Helper: promise wrapper for chrome.storage.sync.get
 function getSyncStorage(keys) {
@@ -73,14 +73,37 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       return;
     }
 
-    // Send message to content script to show loading indicator
-    chrome.tabs.sendMessage(tab.id, {
-      action: 'showLoading',
-      text: selectedText
+    // Check if content script is available before proceeding
+    chrome.tabs.sendMessage(tab.id, { action: 'ping' }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn('Content script not ready, injecting...');
+        // Inject content script if not available
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to inject content script:', chrome.runtime.lastError);
+            return;
+          }
+          // Now try to show loading and summarize
+          chrome.tabs.sendMessage(tab.id, { action: 'showLoading', text: selectedText }, (response) => {
+            if (chrome.runtime.lastError) {
+              console.warn('Could not show loading indicator:', chrome.runtime.lastError);
+            }
+          });
+          summarizeText(selectedText, method, tab.id);
+        });
+      } else {
+        // Content script is ready, proceed normally
+        chrome.tabs.sendMessage(tab.id, { action: 'showLoading', text: selectedText }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.warn('Could not show loading indicator:', chrome.runtime.lastError);
+          }
+        });
+        summarizeText(selectedText, method, tab.id);
+      }
     });
-
-    // Call API to summarize
-    summarizeText(selectedText, method, tab.id);
   }
 });
 
@@ -117,6 +140,18 @@ async function summarizeText(text, method, tabId) {
     chrome.tabs.sendMessage(tabId, {
       action: 'showSummary',
       data: data
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to send summary to content script:', chrome.runtime.lastError);
+        // Fallback: log summary to the page console if content script communication fails
+        chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          func: (summary, method) => {
+            console.log(`Summary (${method}):\n\n${summary}`);
+          },
+          args: [data.summary, method]
+        });
+      }
     });
 
   } catch (error) {
@@ -134,6 +169,18 @@ async function summarizeText(text, method, tabId) {
     chrome.tabs.sendMessage(tabId, {
       action: 'showError',
       error: errorMessage
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to send error to content script:', chrome.runtime.lastError);
+        // Fallback: log error to the page console if content script communication fails
+        chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          func: (errorMsg) => {
+            console.error(`Error: ${errorMsg}`);
+          },
+          args: [errorMessage]
+        });
+      }
     });
   }
 }
